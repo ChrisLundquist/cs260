@@ -15,10 +15,6 @@
 #define BACKLOG 10   // how many pending connections queue will hold
 #define BUFFER_SIZE 4096
 
-void sigchld_handler(int s) {
-    while(waitpid(-1, NULL, WNOHANG) > 0) ;
-}
-
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
     if(sa->sa_family == AF_INET) {
@@ -28,6 +24,8 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 int main(void) {
+    char buffer[BUFFER_SIZE];
+    int recv_size, send_size;
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
@@ -78,18 +76,9 @@ int main(void) {
         exit(1);
     }
 
-    sa.sa_handler = sigchld_handler; // reap all dead processes
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-
-    if(sigaction(SIGCHLD, &sa, NULL) == -1) {
-        perror("sigaction");
-        exit(1);
-    }
-
     printf("server: waiting for connections...\n");
-
     while(1) {  // main accept() loop
+
         sin_size = sizeof their_addr;
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
 
@@ -104,12 +93,7 @@ int main(void) {
 
         printf("server: got connection from %s\n", s);
 
-        //if(!fork()) { // this is the child process
-        char buffer[BUFFER_SIZE];
-        int recv_size, send_size;
         do {
-            close(sockfd); // child doesn't need the listener
-
             recv_size = recv(new_fd, buffer, BUFFER_SIZE - 1, 0);
 
             if(recv_size == -1) {
