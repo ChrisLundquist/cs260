@@ -29,14 +29,8 @@ server: server.o
 
 all: client server
 
-game: all main.o
-	$(CXX) $(FRAMEWORKS) $(LIBS) $(OBJECT_FILES) main.o -o $(APP)
-
-run: game
-	./$(APP)
-
 clean:
-	rm -rf main.o $(OBJECT_FILES) $(OBJECT_SPEC_FILES) $(APP) tests *.o
+	rm -rf main.o $(OBJECT_FILES) $(OBJECT_SPEC_FILES) $(APP) tests *.o client server
 
 .cpp.o:
 	$(CXX) -c $(CFLAGS) $< -o $@
