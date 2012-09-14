@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 #define PORT "3490" // the port client will be connecting to
-#define MAXDATASIZE 4096 // max number of bytes we can get at once
+#define BUFFER_SIZE 4096 // max number of bytes we can get at once
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
@@ -23,7 +23,7 @@ void *get_in_addr(struct sockaddr *sa) {
 int main(int argc, char *argv[]) {
     char done = 0;
     int sockfd, sent_size, recv_size;
-    char buffer[MAXDATASIZE];
+    char buffer[BUFFER_SIZE];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
@@ -69,7 +69,9 @@ int main(int argc, char *argv[]) {
     printf("client: connecting to %s\n", s);
 
     while(!done) {
-        fgets(buffer, MAXDATASIZE, stdin);
+        fgets(buffer, BUFFER_SIZE, stdin);
+
+        sent_size = strlen(buffer);
 
         sent_size = send(sockfd, buffer, sent_size, 0);
         if( sent_size == -1) {
@@ -77,14 +79,14 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        recv_size = recv(sockfd, buffer, MAXDATASIZE-1, 0);
+        recv_size = recv(sockfd, buffer, BUFFER_SIZE-1, 0);
         if( recv_size == -1) {
             perror("recv");
             break;
         }
 
         buffer[recv_size] = '\0';
-        printf("client: received '%s'\n", buffer);
+        printf("client received: %s", buffer);
     }
     close(sockfd);
     return 0;
