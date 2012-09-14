@@ -9,8 +9,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define PORT "3490" // the port client will be connecting to
 #define BUFFER_SIZE 4096 // max number of bytes we can get at once
+#define PORT_LENGTH 6
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
@@ -20,24 +20,41 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+void read_config(char* address, char* port) {
+    FILE* config = fopen("config.txt", "r");
+    fgets(address, INET6_ADDRSTRLEN, config);
+    address = strtok(address," \t\r\n");
+    fgets(port, PORT_LENGTH, config);
+    port = strtok(port," \t\r\n");
+    fclose(config);
+}
+
 int main(int argc, char *argv[]) {
     char done = 0;
     int sockfd, sent_size, recv_size;
     char buffer[BUFFER_SIZE];
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    char s[INET6_ADDRSTRLEN];
+    char port[PORT_LENGTH];
+    char remote[INET6_ADDRSTRLEN];
 
-    if(argc != 2) {
-        fprintf(stderr,"usage: client hostname\n");
-        exit(1);
+    if(argc == 1) {
+        read_config(remote, port);
+        printf("Configured for Remote: '%s'\n", remote);
+        printf("Configured for Port: '%s'\n", port);
+    } else if(argc == 3) {
+        //remote = argv[1];
+        //port = argv[2];
+    } else {
+        printf("Provide no arguments to read config.txt or provide a hostname and port\n");
+        printf("%s host port", argv[0]);
     }
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+    if((rv = getaddrinfo(remote, port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -65,8 +82,8 @@ int main(int argc, char *argv[]) {
     }
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
-            s, sizeof s);
-    printf("client: connecting to %s\n", s);
+            remote, sizeof remote);
+    printf("client: connecting to %s\n", remote);
 
     while(!done) {
         fgets(buffer, BUFFER_SIZE, stdin);
