@@ -1,33 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-#define BUFFER_SIZE 4096 // max number of bytes we can get at once
-#define PORT_LENGTH 6
-
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-    if(sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-void read_config(char* address, char* port) {
-    FILE* config = fopen("config.txt", "r");
-    fgets(address, INET6_ADDRSTRLEN, config);
-    address = strtok(address," \t\r\n");
-    fgets(port, PORT_LENGTH, config);
-    port = strtok(port," \t\r\n");
-    fclose(config);
-}
+#include "network.h"
 
 int main(int argc, char *argv[]) {
     char done = 0;

@@ -1,36 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <signal.h>
 
-#define BACKLOG 10   // how many pending connections queue will hold
-#define BUFFER_SIZE 4096
-#define PORT_LENGTH 6
-
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa) {
-    if(sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-void read_config(char* address, char* port) {
-    FILE* config = fopen("config.txt", "r");
-    fgets(address, INET6_ADDRSTRLEN, config);
-    address = strtok(address," \t\r\n");
-    fgets(port, PORT_LENGTH, config);
-    port = strtok(port," \t\r\n");
-    fclose(config);
-}
+#include "network.h"
 
 int main(void) {
     char listening_port[PORT_LENGTH];
@@ -40,7 +9,12 @@ int main(void) {
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
+
+#ifdef _WIN32
+	char yes = '1';
+#else
     int yes = 1;
+#endif
     char address[INET6_ADDRSTRLEN];
     int rv;
 
@@ -65,7 +39,7 @@ int main(void) {
             continue;
         }
         if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                    sizeof(int)) == -1) {
+                    sizeof(yes)) == -1) {
             perror("setsockopt");
             exit(1);
         }
